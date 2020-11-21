@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="center" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ClientController">
+    <Label alignment="CENTER" text="Клиент" />
+
+    <HBox>
+        <ComboBox fx:id="boxOfDisk" onAction="#changeDiskAction" />
+        <TextField fx:id="pathFieldClient" editable="false" HBox.hgrow="ALWAYS"/>
+        <Button text="На верхнюю папку" onAction="#btnPathUpAction"/>
+    </HBox>
+    <TableView fx:id="clientFileList" VBox.vgrow="ALWAYS" />
+
+    <VBox>
+        <HBox spacing="10">
+         <Button maxWidth="Infinity" focusTraversable="false" text="Загрузить на сервер" onAction="#upload" HBox.hgrow="ALWAYS" />
+            <Button maxWidth="Infinity" focusTraversable="false" text="Переименовать у себя файл" onAction="#btnRenameFileToClient" HBox.hgrow="ALWAYS" />
+        </HBox>
+        <HBox>
+            <Label text="Введите новое имя файла"/>
+            <TextField fx:id="newNameFile" HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </VBox>
+
+</VBox>

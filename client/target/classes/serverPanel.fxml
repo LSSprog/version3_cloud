@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="center" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ServerController">
+
+    <Label alignment="CENTER" text="Сервер" />
+
+    <HBox>
+        <!--<ComboBox fx:id="boxOfDisk" />-->
+        <TextField fx:id="pathFieldServer" editable="false" HBox.hgrow="ALWAYS"/>
+        <Button text="На верхнюю папку" />
+    </HBox>
+    <TableView fx:id="serverFileList" VBox.vgrow="ALWAYS" />
+
+    <VBox>
+        <HBox spacing="10">
+            <Button maxWidth="Infinity" focusTraversable="false" text="Cкачать с сервера" onAction="#download" HBox.hgrow="ALWAYS" />
+            <Button maxWidth="Infinity" focusTraversable="false" text="Удалить файл с сервера" onAction="#btnDeleteFileServer" HBox.hgrow="ALWAYS" />
+        </HBox>
+        <Button maxWidth="Infinity" focusTraversable="false" text="Переименовать файл на сервере" HBox.hgrow="ALWAYS" />
+    </VBox>
+
+    <!--<properties>
+        <controller>
+            <fx: reference source = "controller" />
+        </controller>
+    </properties> -->
+
+</VBox>
