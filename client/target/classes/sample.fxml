@@ -19,7 +19,6 @@
     <HBox VBox.vgrow="ALWAYS">
         <fx:include fx:id="clientPanel" source="clientPanel.fxml" HBox.hgrow="ALWAYS" />
         <fx:include fx:id="serverPanel" source="serverPanel.fxml" HBox.hgrow="ALWAYS" />
-        <ListView fx:id="serverP" HBox.hgrow="ALWAYS" /> <!--prefHeight="100.0" prefWidth="100.0" вернул чтобы видеть работает ли по старому-->
 
     </HBox>
 

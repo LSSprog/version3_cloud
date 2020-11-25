@@ -26,4 +26,9 @@
         </HBox>
     </VBox>
 
+    <properties>
+        <ctrl2><fx:reference source="controller"/></ctrl2>
+    </properties>
+
+
 </VBox>

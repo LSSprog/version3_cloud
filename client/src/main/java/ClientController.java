@@ -1,6 +1,3 @@
-import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
-import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
@@ -32,16 +29,10 @@ public class ClientController implements Initializable {
   TextField pathFieldClient;
 
   @FXML
-  TableView<FileInfo> serverFileList;
-
-  @FXML
   TextField newNameFile;
 
     private String clientDir = "Client_DIR";
-    //public ListView<String> client;
-    //public ListView<String> server;
-    private ObjectDecoderInputStream in;
-    private ObjectEncoderOutputStream out;
+    private final Network net = Network.getInstance();
 
 
     @Override
@@ -110,35 +101,6 @@ public class ClientController implements Initializable {
         });
 
         updateListClient(Paths.get(clientDir));
-
-        try {
-            Socket socket = new Socket("localhost", 1313);
-            in = new ObjectDecoderInputStream(socket.getInputStream());
-            out = new ObjectEncoderOutputStream(socket.getOutputStream());
-
-            Thread t = new Thread(() -> {
-                while (true) {
-                    try {
-                        Object message = in.readObject();
-                        if (message instanceof FileMessage) {
-                            FileMessage file = (FileMessage) message;
-                            Files.write(Paths.get(getCurrentPath(), file.getFileName()), file.getData(), StandardOpenOption.CREATE);
-                            updateListClient(Paths.get(getCurrentPath()));
-                        }
-                    } catch (ClassNotFoundException | IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            t.setDaemon(true);
-            t.start();
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
     }
 
     public void updateListClient(Path path) { // был private
@@ -147,6 +109,7 @@ public class ClientController implements Initializable {
         clientFileList.getItems().clear();
             clientFileList.getItems()
                     .addAll(Files.list(path).map(FileInfo :: new).collect(Collectors.toList()));
+            System.out.println("Обновили список файлов у клиента");
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING,
                     "Не удалось обновить список файлов", ButtonType.OK);
@@ -179,10 +142,8 @@ public class ClientController implements Initializable {
     public void upload(ActionEvent actionEvent) throws IOException {
         String fileName = clientFileList.getSelectionModel().getSelectedItem().getFileName();
         FileMessage message = new FileMessage(Paths.get(getCurrentPath(), fileName));
-        out.writeObject(message);
-        out.flush();
-        out.writeObject(new ListRequest());
-        out.flush();
+        net.writeMessage(message);
+        net.writeMessage(new ListRequest());
 
     }
 
@@ -204,4 +165,35 @@ public class ClientController implements Initializable {
             updateListClient(Paths.get(getCurrentPath()));
         }
     }
+
+
+
+
+            /*try {
+            /*Socket socket = new Socket("localhost", 1313);
+            in = new ObjectDecoderInputStream(socket.getInputStream());
+            out = new ObjectEncoderOutputStream(socket.getOutputStream());*/ /*
+
+            Thread t = new Thread(() -> {
+                while (true) {
+                    try {
+                        AbstractMessage message = net.readMessage();
+                        if (message instanceof FileMessage) {
+                            FileMessage file = (FileMessage) message;
+                            Files.write(Paths.get(getCurrentPath(), file.getFileName()), file.getData(), StandardOpenOption.CREATE);
+                            updateListClient(Paths.get(getCurrentPath()));
+                        }
+                    } catch (ClassNotFoundException | IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            t.setDaemon(true);
+            t.start();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
 }

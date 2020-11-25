@@ -28,7 +28,8 @@ public class FileManager extends ChannelInboundHandlerAdapter {
         if (msg instanceof ListRequest) {
             ListResponse newList = new ListResponse(Paths.get(dir));
             System.out.println(newList.getFilesData().toString()); // что-то не так здесь, пытаюсь поймать ошибку
-            ctx.writeAndFlush(newList);
+            ctx.writeAndFlush(newList); // здесь всё зависает
+            System.out.println("Отрпавляю listResponse на клиента"); //!!!! вот это сообщение не печатается уже!!!
         }
         if (msg instanceof FileMessage) {
             FileMessage file = (FileMessage) msg;

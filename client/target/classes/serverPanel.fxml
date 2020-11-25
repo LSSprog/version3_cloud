@@ -30,4 +30,9 @@
         </controller>
     </properties> -->
 
+    <properties>
+        <ctrl><fx:reference source="controller"/></ctrl>
+    </properties>
+
+
 </VBox>

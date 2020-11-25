@@ -1,5 +1,3 @@
-import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
-import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -10,12 +8,10 @@ import javafx.scene.control.*;
 import utils.FileUtils;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -31,12 +27,13 @@ public class ServerController implements Initializable {
 
     private String serverDir = "Server_DIR";
     private String clientDir = "Dir_of_User";
-    private ObjectDecoderInputStream in;
-    private ObjectEncoderOutputStream out;
+    private final Network net = Network.getInstance();
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        System.out.println("Connect");
 
         TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Тип");
         fileTypeColumn.setCellValueFactory(
@@ -81,57 +78,9 @@ public class ServerController implements Initializable {
         serverFileList.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileDataColumn);
         serverFileList.getSortOrder().add(fileTypeColumn);
 
-        try {
-            Socket socket = new Socket("localhost", 1313);
-            in = new ObjectDecoderInputStream(socket.getInputStream());
-            out = new ObjectEncoderOutputStream(socket.getOutputStream());
-
-            if (!Files.exists(Paths.get(clientDir))) {
-                Files.createDirectory(Paths.get(clientDir));
-            }
-            //List<String> clientFiles = FileUtils.getFiles(Paths.get(clientDir));
-            out.writeObject(new ListRequest());
-            out.flush();
-            Thread t = new Thread(() -> {
-                while (true) {
-                    try {
-                        Object message = in.readObject();
-                        if (message instanceof ListResponse) {
-                            ListResponse list = (ListResponse) message;
-                            serverFileList.getItems().clear();
-                            Platform.runLater(() -> {
-                                serverFileList.getItems().addAll(list.getFilesData());
-                            });
-                            serverFileList.getItems().addAll(list.getFilesData());// ни эта строка ни та что выше не работает - по сути это одно и тоже
-                            System.out.println(list.getFilesData());
-                        }
-                        /*if (message instanceof FileMessage) {
-                            FileMessage file = (FileMessage) message;
-                            Files.write(Paths.get(clientDir, file.getFileName()), file.getData(), StandardOpenOption.CREATE);
-                            //serverFileList.getItems().clear();
-                            //serverFileList.getItems().addAll(FileUtils.getFiles(Paths.get(clientDir)));
-                            //out.writeObject(new ListRequest());
-                            //out.flush();
-                        }*/
-                    } catch (ClassNotFoundException | IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            t.setDaemon(true);
-            t.start();
-            //client.getItems().addAll(clientFiles);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        //updateListServer(Paths.get(serverDir));
-
     }
 
-    private void updateListServer(Path path) { //не так  - здесь надо через ListResponse
+    private void updateListServerV2(Path path) { //не так  - здесь надо через ListResponse
         try {
             pathFieldServer.setText(path.normalize().toAbsolutePath().toString());
             serverFileList.getItems().clear();
@@ -141,6 +90,14 @@ public class ServerController implements Initializable {
             Alert alert = new Alert(Alert.AlertType.WARNING,
                     "Не удалось обновить список файлов", ButtonType.OK);
         }
+    }
+    public void updateListServer(ListResponse list) {
+        System.out.println("Попытка обновления списка сервера");
+        serverFileList.getItems().clear();
+        Platform.runLater(() -> {
+            serverFileList.getItems().addAll(list.getFilesData());
+        });
+        //serverFileList.getItems().addAll(list.getFilesData());// ни эта строка ни та что выше не работает - по сути это одно и тоже
 
     }
 
@@ -161,8 +118,7 @@ public class ServerController implements Initializable {
         System.out.println(fileName);
         FileRequest request = new FileRequest(fileName);
         try {
-            out.writeObject(request);
-            out.flush();
+            net.writeMessage(request);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -174,10 +130,59 @@ public class ServerController implements Initializable {
         //String fileName = "3.txt";
         DeleteFile deleteFile = new DeleteFile(fileName);
         try {
-            out.writeObject(deleteFile);
-            out.flush();
+            net.writeMessage(deleteFile);
+            net.writeMessage(new ListRequest());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+
+
+            /*try {
+
+            if (!Files.exists(Paths.get(clientDir))) {
+                Files.createDirectory(Paths.get(clientDir));
+            }
+            List<String> clientFiles = FileUtils.getFiles(Paths.get(clientDir));
+            net.writeMessage(new ListRequest());
+            System.out.println("Запрос обновления списка сервера");
+            Thread t = new Thread(() -> {
+                while (true) {
+                    try {
+                        AbstractMessage message = net.readMessage();
+                        System.out.println(message.getClass().toString());
+                        if (message instanceof ListResponse) {
+                            ListResponse list = (ListResponse) message;
+                            serverFileList.getItems().clear();
+                            Platform.runLater(() -> {
+                                serverFileList.getItems().addAll(list.getFilesData());
+                            });
+                            serverFileList.getItems().addAll(list.getFilesData());// ни эта строка ни та что выше не работает - по сути это одно и тоже
+                            System.out.println("я в потоке, должен вывести списко файлов на сервере");
+                        }
+                        /*if (message instanceof FileMessage) {
+                            FileMessage file = (FileMessage) message;
+                            Files.write(Paths.get(clientDir, file.getFileName()), file.getData(), StandardOpenOption.CREATE);
+                            //serverFileList.getItems().clear();
+                            //serverFileList.getItems().addAll(FileUtils.getFiles(Paths.get(clientDir)));
+                            //out.writeObject(new ListRequest());
+                            //out.flush();
+                        }*/ /*
+                    } catch (ClassNotFoundException | IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            t.setDaemon(true);
+            t.start();
+            //client.getItems().addAll(clientFiles);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+
+    //updateListServer(Paths.get(serverDir));
+
 }
